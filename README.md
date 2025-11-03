@@ -9,25 +9,17 @@ A collection of utility nodes for Qwen-based image editing in ComfyUI.
   <img src="result.png" alt="Result Image" width="45%" />
 </p>
 
-You can find a complete ComfyUI workflow example in the [`qwen-edit-plus_example.json`](qwen-edit-plus_example.json) file. This workflow demonstrates how to use the TextEncodeQwenImageEditPlus node with two reference images to create an outfit transfer effect.
+You can find complete ComfyUI workflow examples in the following files:
+- [`qwen edit custom simple.json`](qwen edit custom simple.json) - demonstrates basic usage of the custom node with simple configuration
+- [`qwen edit custom full.json`](qwen edit custom full.json) - demonstrates advanced usage with full configuration options
 
 ## Update Log
-### v1.1.8
-- Fix no image occur condition error on advance and pro node
-
-### v1.1.7
-- Use 1,2,3 instead of 0,1,2 for the pro node resize logic
-
-### v1.1.6
-- Add new node for new image resize handling
-
-### v1.1.5
-- Rollback the vl resize and not resize output sequence
-
-### v1.1.4
-- Updated crop method pad to preserve most of the image
-- Add CropWithPadInfo to crop generated image with pad info
-- Add the initial version node for running hub
+### v2.0.0
+- Added TextEncodeQwenImageEditPlusCustom_lrzjason for highly customized image editing.
+- Added QwenEditConfigPreparer, QwenEditConfigJsonParser for creating image configurations.
+- Added QwenEditOutputExtractor for extracting outputs from the custom node.
+- Added QwenEditListExtractor for extracting items from lists.
+- Added CropWithPadInfo for cropping images with pad information.
 
 ## Node
 
@@ -154,6 +146,172 @@ This professional node provides the most flexible text encoding functionality wi
 - Includes pad information for potential image cropping and scaling operations
 - Provides enhanced upscale and crop controls, including padding for image preservation
 
+### TextEncodeQwenImageEditPlusCustom_lrzjason
+
+This node provides maximum flexibility for image editing workflows by allowing custom configurations for each reference image. Each image can have its own specific settings for both reference (VAE) and vision-language (VL) processing, enabling highly customized image editing scenarios.
+
+#### Inputs
+
+- **clip**: The CLIP model to use for encoding
+- **vae**: The VAE model for image encoding
+- **prompt**: The text prompt to encode
+- **configs**: A list of configuration dictionaries for each image, containing:
+  - **image**: The reference image for image editing
+  - **to_ref**: Whether to include image in reference processing (VAE encoding)
+  - **ref_main_image**: Whether this image is the main reference image for focused conditioning
+  - **ref_longest_edge**: Target longest edge size for reference processing (default: 1024)
+  - **ref_crop**: Cropping method for reference processing (options: "pad", "center", "disabled")
+  - **ref_upscale**: Upscaling method for reference processing (options: "lanczos", "bicubic", "area")
+  - **to_vl**: Whether to include image in vision-language processing
+  - **vl_resize**: Whether to resize image for VL processing (default: True)
+  - **vl_target_size**: Target size for VL processing (default: 384)
+  - **vl_crop**: Cropping method for VL processing (options: "center", "disabled")
+  - **vl_upscale**: Upscaling method for VL processing (options: "bicubic", "area", "lanczos")
+- **return_full_refs_cond** (optional): Whether to return conditioning with all reference images or only with the main reference (default: True)
+- **instruction** (optional): Custom instruction for image editing
+
+#### Outputs
+
+- **CONDITIONING**: The encoded conditioning tensor (with all or only main reference based on return_full_refs_cond)
+- **LATENT**: The encoded latent representation of the main reference image
+- **custom_output**: A dictionary containing:
+  - **pad_info**: Padding information dictionary containing scaling and padding details
+  - **full_refs_cond**: Conditioning with all reference latents
+  - **main_ref_cond**: Conditioning with only the main reference latent
+  - **main_image**: The processed main reference image
+  - **vae_images**: List of all processed VAE images
+  - **ref_latents**: List of all reference latents
+  - **vl_images**: List of all processed VL images
+  - **full_prompt**: The complete prompt with image descriptions
+  - **llama_template**: The applied system prompt template
+
+#### Behavior
+
+- Provides maximum flexibility by allowing per-image configurations for both reference and VL processing
+- Supports multiple reference images with different processing requirements simultaneously
+- Allows fine-grained control over scaling, cropping, and resizing for each image
+- Returns comprehensive output dictionary with all intermediate results
+- Integrates with custom instructions for tailored image editing
+- Provides both full reference and main reference conditioning outputs
+
+### QwenEditConfigPreparer
+
+This helper node creates configuration objects for use with the TextEncodeQwenImageEditPlusCustom_lrzjason node. It allows you to define custom processing parameters for individual images.
+
+#### Inputs
+
+- **image**: The reference image to configure
+- **configs** (optional): An existing list of configuration objects to append to
+- **to_ref** (optional): Whether to include image in reference processing (default: True)
+- **ref_main_image** (optional): Whether this image is the main reference image (default: True)
+- **ref_longest_edge** (optional): Target longest edge size for reference processing (default: 1024)
+- **ref_crop** (optional): Cropping method for reference processing (options: "pad", "center", "disabled", default: "center")
+- **ref_upscale** (optional): Upscaling method for reference processing (options: "lanczos", "bicubic", "area", default: "lanczos")
+- **to_vl** (optional): Whether to include image in vision-language processing (default: True)
+- **vl_resize** (optional): Whether to resize image for VL processing (default: True)
+- **vl_target_size** (optional): Target size for VL processing (default: 384)
+- **vl_crop** (optional): Cropping method for VL processing (options: "center", "disabled", default: "center")
+- **vl_upscale** (optional): Upscaling method for VL processing (options: "bicubic", "area", "lanczos", default: "bicubic")
+
+#### Outputs
+
+- **configs**: The updated list of configuration objects
+- **config**: The configuration object for the current image
+
+#### Behavior
+
+- Creates configuration objects that define how each image should be processed
+- Allows appending to existing configuration lists
+- Provides default values for all configuration parameters
+- Output config list can be connected directly to TextEncodeQwenImageEditPlusCustom_lrzjason
+
+### QwenEditConfigJsonParser
+
+This helper node creates configuration objects from JSON strings for use with the TextEncodeQwenImageEditPlusCustom_lrzjason node. It provides an alternative method to define configuration parameters.
+
+#### Inputs
+
+- **image**: The reference image to configure
+- **configs** (optional): An existing list of configuration objects to append to
+- **config_json** (optional): JSON string containing configuration parameters
+
+#### Outputs
+
+- **configs**: The updated list of configuration objects
+- **config**: The configuration object for the current image
+
+#### Behavior
+
+- Creates configuration objects from JSON strings
+- Allows appending to existing configuration lists
+- Provides a default JSON configuration template
+- Output config list can be connected directly to TextEncodeQwenImageEditPlusCustom_lrzjason
+
+### QwenEditOutputExtractor
+
+This helper node extracts specific outputs from the custom_output dictionary produced by the TextEncodeQwenImageEditPlusCustom_lrzjason node.
+
+#### Inputs
+
+- **custom_output**: The custom output dictionary from the custom node
+
+#### Outputs
+
+- **pad_info**: Padding information dictionary
+- **full_refs_cond**: Conditioning with all reference latents
+- **main_ref_cond**: Conditioning with only the main reference latent
+- **main_image**: The main reference image
+- **vae_images**: List of all processed VAE images
+- **ref_latents**: List of all reference latents
+- **vl_images**: List of all processed VL images
+- **full_prompt**: The complete prompt with image descriptions
+- **llama_template**: The applied system prompt template
+
+#### Behavior
+
+- Extracts individual components from the complex output dictionary
+- Provides access to all intermediate results from the custom node
+- Enables modular processing of different output components
+
+### QwenEditListExtractor
+
+This helper node extracts a specific item from a list based on its index position.
+
+#### Inputs
+
+- **items**: The input list
+- **index**: The index of the item to extract (default: 0)
+
+#### Outputs
+
+- **item**: The extracted item from the list
+
+#### Behavior
+
+- Extracts a single item from a list based on index
+- Useful for extracting specific images from the vae_images list or other collections
+- Supports any list items regardless of type
+
+### CropWithPadInfo
+
+This utility node crops an image using pad information generated by other nodes, allowing precise cropping back to the original content area after padding operations.
+
+#### Inputs
+
+- **image**: The image to crop
+- **pad_info**: The pad information dictionary containing x, y, width, height and scale values
+
+#### Outputs
+
+- **cropped_image**: The cropped image with original content dimensions
+- **scale_by**: The scale factor used in the original processing
+
+#### Behavior
+
+- Uses pad information to crop images to their original content area
+- Removes padding that was added during processing
+- Returns the scale factor for potential additional operations
+
 ## Key Features
 
 - **Multi-Image Support**: Incorporate up to 3 reference images into your text-to-image generation workflow
@@ -168,24 +326,6 @@ This professional node provides the most flexible text encoding functionality wi
 1. Clone or download this repository into your ComfyUI's `custom_nodes` directory.
 2. Restart ComfyUI.
 3. The node will be available in the "advanced/conditioning" category.
-
-## Update Log
-### v1.1.3
-- Updated crop method pad to preserve most of the image
-- Add CropWithPadInfo to crop generated image with pad info
-
-### v1.0.6
-- Updated advance node
-
-### v1.0.5
-- Updated node to support separate enable_vl_resize parameter
-- Modified return types to provide 5 individual IMAGE outputs instead of a single combined output
-- Improved image processing logic with separate handling for VAE and VL encoding
-- Enhanced documentation to accurately reflect node inputs and outputs
-- Fixed latent output handling to properly return first reference image latent
-
-### v1.0.1
-- Initial release with basic text encoding and single image reference support
 
 ## Contact
 - **Twitter**: [@Lrzjason](https://twitter.com/Lrzjason)  
