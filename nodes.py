@@ -842,7 +842,7 @@ class TextEncodeQwenImageEditPlusCustom_lrzjason:
         main_image_index = -1
         for i, image_obj in enumerate(configs):
             if image_obj["to_ref"]:
-                if image_obj["ref_main_image"]:
+                if main_image_index == -1 and image_obj["ref_main_image"]:
                     main_image_index = i
                     continue
                 # ensure only one main image
