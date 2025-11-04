@@ -1290,7 +1290,38 @@ class QwenEditAny2Latent():
     def extract(self, item):
         latent_out = {"samples": item}
         return (latent_out, )  
+
+class QwenEditAdaptiveLongestEdge():
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": 
+            {
+                "image": ("IMAGE", ),
+                "max_size": ("INT", {"default": 2048, "min": 512, "max": 4096, "step": 1, "tooltip": "When image is larger than max_size, it will be resized to under the max_size."}),
+            },
+        }
+
+    RETURN_TYPES = ("INT", )
+    RETURN_NAMES = ("longest_edge", )
+    FUNCTION = "calculate_longest_edge"
+
+    CATEGORY = "advanced/conditioning"
+    def calculate_longest_edge(self, image, max_size):
+        output = max(image.shape[1], image.shape[2])
+        # print("image.shape[2], image.shape[3]", image.shape[1], image.shape[2])
+        # print("longest_edge", output)
+        if output <= max_size:
+            return (output, )
+        # Find how many times m fits into n
+        k = int(math.ceil(output / max_size))
+        # print("k", k)
+        # Scale down by that factor
         
+        output = int(output / k)
+        # print("output", output)
+        return (output, )  
+
 NODE_CLASS_MAPPINGS = {
     "CropWithPadInfo": CropWithPadInfo,
     "TextEncodeQwenImageEdit_lrzjason": TextEncodeQwenImageEdit_lrzjason,
@@ -1303,7 +1334,8 @@ NODE_CLASS_MAPPINGS = {
     "QwenEditConfigJsonParser": QwenEditConfigJsonParser,
     "QwenEditListExtractor": QwenEditListExtractor,
     "QwenEditAny2Image": QwenEditAny2Image,
-    "QwenEditAny2Latent": QwenEditAny2Latent
+    "QwenEditAny2Latent": QwenEditAny2Latent,
+    "QwenEditAdaptiveLongestEdge": QwenEditAdaptiveLongestEdge
 }
 
 # Display name mappings
@@ -1319,5 +1351,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "QwenEditConfigJsonParser": "Qwen Edit Config Json Parser",
     "QwenEditListExtractor": "Qwen Edit List Extractor",
     "QwenEditAny2Image": "Qwen Edit Any2Image",
-    "QwenEditAny2Latent": "Qwen Edit Any2Latent"
+    "QwenEditAny2Latent": "Qwen Edit Any2Latent",
+    "QwenEditAdaptiveLongestEdge": "Qwen Edit Adaptive Longest Edge"
 }
