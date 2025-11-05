@@ -1013,7 +1013,9 @@ class TextEncodeQwenImageEditPlusCustom_lrzjason:
         if not return_full_refs_cond:
             conditioning_output = conditioning_only_with_main_ref
         
-        main_image = vae_images[main_image_index]
+        main_image = None
+        if main_image_index > 0:
+            main_image = vae_images[main_image_index]
         
         custom_output = {
             "pad_info": pad_info,
