@@ -1014,7 +1014,7 @@ class TextEncodeQwenImageEditPlusCustom_lrzjason:
             conditioning_output = conditioning_only_with_main_ref
         
         main_image = None
-        if main_image_index > 0:
+        if len(vae_images)>0:
             main_image = vae_images[main_image_index]
         
         custom_output = {
