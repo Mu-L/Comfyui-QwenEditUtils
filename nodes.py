@@ -1104,7 +1104,14 @@ class QwenEditConfigJsonParser():
         config["image"] = image
         
         config["mask"] = None
+        
+        # print("mask.shape", mask.shape)
+        # print("image.shape", image.shape)
         if mask is not None:
+            # check mask height,width equals image height,width
+            if mask.shape[1] != image.shape[1] or mask.shape[2] != image.shape[2]:
+                print("mask height,width not equals image height,width, skipping mask")
+                mask = None
             config["mask"] = mask
         
         config_output = copy.deepcopy(configs)
@@ -1193,8 +1200,13 @@ class QwenEditConfigPreparer:
         
         config_output = copy.deepcopy(configs)
         
-        config["mask"] = None
+        # print("mask.shape", mask.shape)
+        # print("image.shape", image.shape)
         if mask is not None:
+            # check mask height,width equals image height,width
+            if mask.shape[1] != image.shape[1] or mask.shape[2] != image.shape[2]:
+                print("mask height,width not equals image height,width, skipping mask")
+                mask = None
             config["mask"] = mask
         
         del configs
